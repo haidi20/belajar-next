@@ -1,23 +1,25 @@
 import { useSession } from 'next-auth/react'
 import Image from 'next/image';
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { EmojiHappyIcon } from '@heroicons/react/solid';
 import { CameraIcon, VideoCameraIcon } from '@heroicons/react/outline';
 
 import { db } from '../firebase';
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"; 
+import { addDoc, serverTimestamp, collection } from "firebase/firestore"; 
 
 function InputBox() {
 const {data: session} = useSession();
 const inputRef = useRef(null);
+const filepickerRef = useRef(null);
+const [imagePost, setImagePost] = useState(null);
 
-  const sendPost = async (e) => {
+  const sendPost = async e => {
     e.preventDefault();
 
     if (!inputRef.current.value) return ;
 
-    await setDoc(doc(db, "posts", session.user.email), {
+    await await addDoc(collection(db, "posts"), {
       message: inputRef.current.value,
       name: session.user.name,
       email: session.user.email,
@@ -26,6 +28,24 @@ const inputRef = useRef(null);
     });
 
     inputRef.current.value = "";
+  }
+
+  const addImageToPost = e => {
+    e.preventDefault();
+
+    const reader = new FileReader();
+
+    if (e.target.files[0]) {
+      reader.readAsDataURL(e.target.files[0]);
+    }
+
+    reader.onload = readerEvent => {
+      setImagePost(readerEvent.target.result);
+    }
+  }
+
+  const removeImage = () => {
+    setImagePost(null);
   }
 
   return (
@@ -52,6 +72,22 @@ const inputRef = useRef(null);
                 Submit
             </button>
         </form>
+
+        {imagePost && (
+          <div 
+            className="flex flex-col filter cursor-pointer
+                       hover:brightness-110 transition duration-150 transform hover:scale-105 "
+            onClick={removeImage}> 
+            <img 
+              className="h-10 object-contain"
+              src={imagePost} 
+              alt="review image post" />
+            <p
+              className="text-xs text-red-500 text-center">
+              Remove
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-evenly p-3 border-t ">
@@ -63,13 +99,20 @@ const inputRef = useRef(null);
               Live Video
           </p>
         </div>
-        <div className="inputIcon">
+        <div
+          onClick={() => filepickerRef.current.click()} 
+          className="inputIcon">
           <CameraIcon 
             className="h-7 text-green-400"/>
           <p 
             className="text-xs sm:text-sm xl:text-base">
               Photo/Video
           </p>
+          <input 
+            ref={filepickerRef}
+            type="file" 
+            onChange={addImageToPost}
+            hidden/>
         </div>
         <div className="inputIcon">
           <EmojiHappyIcon 
