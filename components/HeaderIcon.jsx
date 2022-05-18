@@ -2,8 +2,6 @@ import React from 'react'
 
 function HeaderIcon({Icon, active}) {
 
-  console.info(active);
-
   return (
     <div 
       className="cursor-pointer flex items-center rounded-xl

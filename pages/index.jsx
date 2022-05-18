@@ -3,6 +3,7 @@ import Header from '../components/Header'
 import Login from '../components/Login';
 import { getSession } from "next-auth/react"
 import Sidebar from '../components/Sidebar';
+import Feed from '../components/Feed';
 
 export default function Home({session}) {
 
@@ -19,10 +20,11 @@ export default function Home({session}) {
       {/* <h1 className="text-2xl">Let's build facebook</h1> */}
       <Header />
       
-      <main>
+      <main className="flex bg-gray-100">
         {/* Sidebar */}
         <Sidebar />
         {/* Feed */}
+        <Feed />
         {/* Widgets */}
       </main>
     </div>
