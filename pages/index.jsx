@@ -1,13 +1,18 @@
+import { useEffect, useState } from 'react';
+
 import Head from 'next/head'
 import Header from '../components/Header'
 import Login from '../components/Login';
 import { getSession } from "next-auth/react"
 import Sidebar from '../components/Sidebar';
 import Feed from '../components/Feed';
+import Widgets from '../components/Widgets';
 
-export default function Home({session}) {
+import { fetchPosts } from '../pages/api/post';
 
-  // if (!session) return <Login />
+export default function Home({session, posts}) {
+
+  if (!session) return <Login />
 
   return (
     <div >
@@ -21,24 +26,23 @@ export default function Home({session}) {
       <Header />
       
       <main className="flex bg-gray-100">
-        {/* Sidebar */}
         <Sidebar />
-        {/* Feed */}
-        <Feed />
-        {/* Widgets */}
+        <Feed posts={posts} />
+        <Widgets />
       </main>
     </div>
   )
 }
 
 export async function getServerSideProps(context) {
-  // get the user
-
+  
   const session = await getSession(context);
+  const posts = await fetchPosts();
 
   return {
     props: {
       session,
+      posts: posts || null,
     }
   }
 }

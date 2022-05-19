@@ -1,0 +1,1 @@
+hey, I was working store data to firestore, uploading images to storage, updating data on firestore for imagePostUrl, and showing data with API. you can read more here: https://github.com/haidi20/belajar-next/blob/main/components/InputBox.jsx

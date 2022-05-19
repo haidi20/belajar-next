@@ -7,6 +7,10 @@ const nextConfig = {
             "platform-lookaside.fbsbx.com",
             "firebasestorage.googleapis.com",
         ]
+    },
+    env: {
+        NEXT_BASE_API_URL: process.env.NEXT_BASE_API_URL,
+        NEXT_API_KEY: process.env.NEXT_API_KEY,
     }
 }
 

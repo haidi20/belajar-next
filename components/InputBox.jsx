@@ -10,6 +10,7 @@ import { addDoc, serverTimestamp, collection, updateDoc } from "firebase/firesto
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 function InputBox() {
+  
 const {data: session} = useSession();
 const inputRef = useRef(null);
 const filepickerRef = useRef(null);
@@ -30,64 +31,49 @@ const [imagePost, setImagePost] = useState({
       image: session.user.image,
       timestamp: serverTimestamp(),
     }).then(doc => {
-      if(imagePost) {
-        console.info("upload image");
-        console.info(imagePost);
+      console.info("works send");
+
+      if(imagePost.file != null) {
         
         const storageRef = ref(storage, `posts/${doc.id}`);
         const uploadTask = uploadBytesResumable(storageRef, imagePost.file);
-        // const uploadTask = uploadString(storageRef, imagePost, "data_url");
 
-        // Register three observers:
-        // 1. 'state_changed' observer, called any time the state changes
-        // 2. Error observer, called on failure
-        // 3. Completion observer, called on successful completion
         uploadTask.on('state_changed', 
-        (snapshot) => {
-          // Observe state change events such as progress, pause, and resume
-          // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          console.log('Upload is ' + progress + '% done');
-          switch (snapshot.state) {
-            case 'paused':
-              console.log('Upload is paused');
-              break;
-            case 'running':
-              console.log('Upload is running');
-              break;
-          }
-        }, 
-        (error) => {
-          // Handle unsuccessful uploads
-        }, 
-        () => {
-          // Handle successful uploads on complete
-          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-          getDownloadURL(uploadTask.snapshot.ref).then( async (downloadURL) => {
-            console.log('File available at', downloadURL);
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log('Upload is ' + progress + '% done');
+            switch (snapshot.state) {
+              case 'paused':
+                console.log('Upload is paused');
+                break;
+              case 'running':
+                console.log('Upload is running');
+                break;
+            }
+          }, 
+          (error) => {
+            
+          }, 
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then( async (downloadURL) => {
+              console.log('File available at', downloadURL);
 
-            // Add a new document in collection "cities"
-            // await setDoc(doc(db, "posts", doc.id), {
-            //   imageUrl: downloadURL,
-            // }).then(snapshot => {
-
-            //   console.info(snapshot);
-            // });
-            // Atomically increment the population of the city by 50.
-            await updateDoc(doc, {
-              imagePost: downloadURL,
-            }).then(snapshot => {
-                console.info(snapshot);
+              await updateDoc(doc, {
+                imagePostUrl: downloadURL,
               });
-          });
-        }
-        );
 
-        removeImage();
+              window.location.reload();
+
+              // removeImage();
+            });
+          }
+        );
       }
+
+      inputRef.current.value = "";
     });
 
-    inputRef.current.value = "";
+    
   }
 
   const addImageToPost = e => {
