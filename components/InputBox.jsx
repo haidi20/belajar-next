@@ -5,14 +5,18 @@ import React, { useRef, useState } from 'react'
 import { EmojiHappyIcon } from '@heroicons/react/solid';
 import { CameraIcon, VideoCameraIcon } from '@heroicons/react/outline';
 
-import { db } from '../firebase';
+import { db, storage } from '../firebase';
 import { addDoc, serverTimestamp, collection } from "firebase/firestore"; 
+import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
 
 function InputBox() {
 const {data: session} = useSession();
 const inputRef = useRef(null);
 const filepickerRef = useRef(null);
-const [imagePost, setImagePost] = useState(null);
+const [imagePost, setImagePost] = useState({
+  file: null,
+  fileBit: null,
+});
 
   const sendPost = async e => {
     e.preventDefault();
@@ -25,6 +29,48 @@ const [imagePost, setImagePost] = useState(null);
       email: session.user.email,
       image: session.user.image,
       timestamp: serverTimestamp(),
+    }).then(doc => {
+      if(imagePost) {
+        console.info("upload image");
+        console.info(imagePost);
+        
+        const storageRef = ref(storage, `posts/${doc.id}`);
+        const uploadTask = uploadBytesResumable(storageRef, imagePost.file);
+        // const uploadTask = uploadString(storageRef, imagePost, "data_url");
+
+        // Register three observers:
+        // 1. 'state_changed' observer, called any time the state changes
+        // 2. Error observer, called on failure
+        // 3. Completion observer, called on successful completion
+        uploadTask.on('state_changed', 
+        (snapshot) => {
+          // Observe state change events such as progress, pause, and resume
+          // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log('Upload is ' + progress + '% done');
+          switch (snapshot.state) {
+            case 'paused':
+              console.log('Upload is paused');
+              break;
+            case 'running':
+              console.log('Upload is running');
+              break;
+          }
+        }, 
+        (error) => {
+          // Handle unsuccessful uploads
+        }, 
+        () => {
+          // Handle successful uploads on complete
+          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+            console.log('File available at', downloadURL);
+          });
+        }
+        );
+
+        removeImage();
+      }
     });
 
     inputRef.current.value = "";
@@ -33,15 +79,29 @@ const [imagePost, setImagePost] = useState(null);
   const addImageToPost = e => {
     e.preventDefault();
 
+    console.log('add image');
+
     const reader = new FileReader();
 
     if (e.target.files[0]) {
+      // console.info("exists file")
+      // setImagePost({
+      //   ...imagePost,
+      //   file: e.target.files[0],
+      // });
+
       reader.readAsDataURL(e.target.files[0]);
+      reader.onload = readerEvent => {
+        // setImagePost(readerEvent.target.result);
+        setImagePost({
+          // ...imagePost,
+          file: e.target.files[0],
+          fileBit: readerEvent.target.result,
+        });
+      }      
     }
 
-    reader.onload = readerEvent => {
-      setImagePost(readerEvent.target.result);
-    }
+    
   }
 
   const removeImage = () => {
@@ -73,14 +133,14 @@ const [imagePost, setImagePost] = useState(null);
             </button>
         </form>
 
-        {imagePost && (
+        {imagePost?.fileBit && (
           <div 
             className="flex flex-col filter cursor-pointer
                        hover:brightness-110 transition duration-150 transform hover:scale-105 "
             onClick={removeImage}> 
             <img 
               className="h-10 object-contain"
-              src={imagePost} 
+              src={imagePost.fileBit} 
               alt="review image post" />
             <p
               className="text-xs text-red-500 text-center">
