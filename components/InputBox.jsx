@@ -6,8 +6,8 @@ import { EmojiHappyIcon } from '@heroicons/react/solid';
 import { CameraIcon, VideoCameraIcon } from '@heroicons/react/outline';
 
 import { db, storage } from '../firebase';
-import { addDoc, serverTimestamp, collection } from "firebase/firestore"; 
-import { ref, uploadBytesResumable, uploadString, getDownloadURL } from "firebase/storage";
+import { addDoc, serverTimestamp, collection, updateDoc } from "firebase/firestore"; 
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 function InputBox() {
 const {data: session} = useSession();
@@ -23,7 +23,7 @@ const [imagePost, setImagePost] = useState({
 
     if (!inputRef.current.value) return ;
 
-    await await addDoc(collection(db, "posts"), {
+    await addDoc(collection(db, "posts"), {
       message: inputRef.current.value,
       name: session.user.name,
       email: session.user.email,
@@ -63,8 +63,22 @@ const [imagePost, setImagePost] = useState({
         () => {
           // Handle successful uploads on complete
           // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          getDownloadURL(uploadTask.snapshot.ref).then( async (downloadURL) => {
             console.log('File available at', downloadURL);
+
+            // Add a new document in collection "cities"
+            // await setDoc(doc(db, "posts", doc.id), {
+            //   imageUrl: downloadURL,
+            // }).then(snapshot => {
+
+            //   console.info(snapshot);
+            // });
+            // Atomically increment the population of the city by 50.
+            await updateDoc(doc, {
+              imagePost: downloadURL,
+            }).then(snapshot => {
+                console.info(snapshot);
+              });
           });
         }
         );
